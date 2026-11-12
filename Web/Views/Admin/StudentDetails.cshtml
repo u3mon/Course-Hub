@@ -1,0 +1,153 @@
+@model AdminStudentDetailViewModel
+@{
+    ViewData["Title"] = $"Профиль студента: {Model.Student.FullName}";
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<partial name="_AdminNav" />
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="text-muted small">Профиль зарегистрированного студента</div>
+        <h1 class="h3 fw-bold mb-0">@Model.Student.FullName</h1>
+    </div>
+    <a asp-action="Students" class="btn btn-light border rounded-3">К списку студентов</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="ch-card p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="fw-bold">Статус аккаунта:</span>
+                @if (Model.Student.IsActive)
+                {
+                    <span class="ch-badge ch-badge-available">Активен</span>
+                }
+                else
+                {
+                    <span class="ch-badge ch-badge-unavailable">Заблокирован</span>
+                }
+            </div>
+
+            <div class="small mb-4">
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">ID студента:</span>
+                    <span class="fw-semibold">#@Model.Student.Id</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Имя:</span>
+                    <span class="fw-semibold">@Model.Student.FirstName</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Фамилия:</span>
+                    <span class="fw-semibold">@Model.Student.LastName</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Email:</span>
+                    <span class="fw-semibold">@Model.Student.Email</span>
+                </div>
+                <div class="d-flex justify-content-between py-2">
+                    <span class="text-muted">Дата регистрации:</span>
+                    <span class="fw-semibold">@Model.Student.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <a asp-action="EditStudent" asp-route-id="@Model.Student.Id" class="btn btn-ch-primary">
+                    Редактировать данные
+                </a>
+                <form asp-action="ToggleStudentStatus" asp-route-id="@Model.Student.Id" method="post"
+                      data-confirm="@(Model.Student.IsActive ? "Заблокировать аккаунт студента? Он не сможет войти в систему или записываться на курсы." : "Восстановить доступ студенту?")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="isActive" value="@((!Model.Student.IsActive).ToString().ToLower())" />
+                    <input type="hidden" name="returnUrl" value="@currentUrl" />
+                    <button type="submit" class="btn @(Model.Student.IsActive ? "btn-outline-danger" : "btn-outline-success") w-100 rounded-3 fw-semibold">
+                        @(Model.Student.IsActive ? "Заблокировать аккаунт" : "Восстановить аккаунт")
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        @if (Model.Student.IsActive)
+        {
+            <div class="ch-card p-4 mt-4">
+                <h2 class="h6 fw-bold mb-2">Добавить студента на курс</h2>
+                @if (!Model.AvailableCourses.Any())
+                {
+                    <p class="text-muted small mb-0">Студент уже записан на все существующие курсы.</p>
+                }
+                else
+                {
+                    <form asp-action="AddStudentToCourse" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="studentId" value="@Model.Student.Id" />
+                        <input type="hidden" name="returnUrl" value="@currentUrl" />
+                        <div class="mb-3">
+                            <select name="courseId" class="form-select" required>
+                                @foreach (var c in Model.AvailableCourses)
+                                {
+                                    <option value="@c.Id">@c.Title (@c.CategoryName)</option>
+                                }
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary w-100 rounded-3 fw-semibold">Записать на курс</button>
+                    </form>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-8">
+        <div class="ch-card p-4">
+            <h2 class="h5 fw-bold mb-3">Курсы студента (@Model.Student.Enrollments.Count)</h2>
+
+            @if (!Model.Student.Enrollments.Any())
+            {
+                <div class="ch-empty-state py-4">
+                    <p class="text-muted mb-0">Студент пока не записан ни на один курс.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Курс</th>
+                                <th>Категория</th>
+                                <th>Преподаватель</th>
+                                <th>Дата записи</th>
+                                <th class="text-end">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var e in Model.Student.Enrollments)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">
+                                        <a asp-action="CourseStudents" asp-route-id="@e.CourseId" class="text-decoration-none text-dark">
+                                            @e.CourseTitle
+                                        </a>
+                                    </td>
+                                    <td><span class="ch-badge ch-badge-category">@e.CategoryName</span></td>
+                                    <td>@e.InstructorName</td>
+                                    <td class="small text-muted">@e.EnrollDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td class="text-end">
+                                        <form asp-action="RemoveStudentFromCourse" method="post" class="d-inline"
+                                              data-confirm="Удалить запись студента на курс «@e.CourseTitle»?">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="courseId" value="@e.CourseId" />
+                                            <input type="hidden" name="studentId" value="@Model.Student.Id" />
+                                            <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-3">Удалить запись</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

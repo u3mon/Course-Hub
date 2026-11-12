@@ -1,0 +1,162 @@
+@model CourseDto
+@{
+    ViewData["Title"] = Model.Title;
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a asp-controller="Courses" asp-action="Index" class="text-decoration-none">Каталог курсов</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Courses" asp-action="Index" asp-route-CategoryId="@Model.CategoryId" class="text-decoration-none">@Model.CategoryName</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="ch-card overflow-hidden">
+            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" alt="@Model.Title" style="max-height: 340px; width: 100%; object-fit: cover;" />
+            }
+            <div class="p-4 p-md-5">
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                    <span class="ch-badge ch-badge-category">@Model.CategoryName</span>
+                    @if (Model.IsAvailable && !Model.IsFull)
+                    {
+                        <span class="ch-badge ch-badge-available">Открыт для записи</span>
+                    }
+                    else if (Model.IsFull)
+                    {
+                        <span class="ch-badge ch-badge-unavailable">Все места заняты</span>
+                    }
+                    else
+                    {
+                        <span class="ch-badge ch-badge-unavailable">Запись закрыта</span>
+                    }
+                    <span class="text-muted small ms-auto">Опубликован: @Model.CreatedAt.ToString("dd.MM.yyyy")</span>
+                </div>
+
+                <h1 class="h2 fw-bold mb-3">@Model.Title</h1>
+
+                <h2 class="h5 fw-bold mt-4 mb-2">О курсе</h2>
+                <p class="text-secondary lh-lg mb-4" style="white-space: pre-line;">@Model.Description</p>
+
+                <div class="row g-3 pt-3 border-top">
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="text-muted small">Преподаватель</div>
+                            <div class="fw-bold mt-1">@Model.InstructorName</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="text-muted small">Продолжительность</div>
+                            <div class="fw-bold mt-1">@Model.Duration</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="text-muted small">Студентов на курсе</div>
+                            <div class="fw-bold mt-1">
+                                @if (Model.MaxStudents.HasValue)
+                                {
+                                    <span>@Model.EnrolledCount из @Model.MaxStudents.Value</span>
+                                }
+                                else
+                                {
+                                    <span>@Model.EnrolledCount (без лимита)</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="ch-card p-4 sticky-lg-top" style="top: 90px;">
+            <div class="mb-3">
+                <div class="text-muted small">Стоимость обучения</div>
+                @if (Model.Price == 0)
+                {
+                    <div class="display-6 fw-bold text-success">Бесплатно</div>
+                }
+                else
+                {
+                    <div class="display-6 fw-bold">@Model.Price.ToString("N0") ₽</div>
+                }
+            </div>
+
+            <hr />
+
+            @if (User.Identity?.IsAuthenticated != true)
+            {
+                <div class="alert alert-light border small mb-3">
+                    Для записи на курс необходимо войти в аккаунт студента или зарегистрироваться.
+                </div>
+                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@currentUrl" class="btn btn-ch-primary w-100 py-2 mb-2">
+                    Войти и записаться
+                </a>
+                <a asp-controller="Account" asp-action="Register" class="btn btn-outline-secondary w-100 py-2 rounded-3 fw-semibold">
+                    Создать аккаунт
+                </a>
+            }
+            else if (User.IsInRole("Student"))
+            {
+                @if (Model.IsEnrolled)
+                {
+                    <div class="alert alert-success border-0 small mb-3">
+                        <strong>Вы уже записаны на этот курс!</strong> Курс отображается в разделе «Мои курсы».
+                    </div>
+                    <a asp-controller="Enrollments" asp-action="MyCourses" class="btn btn-ch-primary w-100 py-2 mb-2">
+                        Перейти в «Мои курсы»
+                    </a>
+                    <form asp-controller="Enrollments" asp-action="Unenroll" method="post" data-confirm="Вы уверены, что хотите отменить запись на курс «@Model.Title»?">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="courseId" value="@Model.Id" />
+                        <input type="hidden" name="returnUrl" value="@currentUrl" />
+                        <button type="submit" class="btn btn-outline-danger w-100 py-2 rounded-3 fw-semibold">
+                            Отменить запись на курс
+                        </button>
+                    </form>
+                }
+                else if (Model.CanEnroll)
+                {
+                    <form asp-controller="Enrollments" asp-action="Enroll" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="courseId" value="@Model.Id" />
+                        <input type="hidden" name="returnUrl" value="@currentUrl" />
+                        <button type="submit" class="btn btn-ch-primary w-100 py-2 fs-6">
+                            Записаться на курс
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-warning border-0 small mb-0">
+                        Запись на данный курс в настоящий момент закрыта или свободные места закончились.
+                    </div>
+                }
+            }
+            else if (User.IsInRole("Admin"))
+            {
+                <div class="d-grid gap-2">
+                    <a asp-controller="Admin" asp-action="EditCourse" asp-route-id="@Model.Id" class="btn btn-ch-primary">
+                        Редактировать курс
+                    </a>
+                    <a asp-controller="Admin" asp-action="CourseStudents" asp-route-id="@Model.Id" class="btn btn-outline-primary rounded-3 fw-semibold">
+                        Записанные студенты (@Model.EnrolledCount)
+                    </a>
+                </div>
+            }
+
+            <div class="mt-4 pt-3 border-top small text-muted">
+                <div class="mb-1">&check; Доступ к учебным материалам 24/7</div>
+                <div class="mb-1">&check; Практические задания и проекты</div>
+                <div>&check; Мгновенная запись и управление в личном кабинете</div>
+            </div>
+        </div>
+    </div>
+</div>

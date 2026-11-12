@@ -1,0 +1,112 @@
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "Мой профиль";
+}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="ch-card p-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="ch-brand-badge" style="width: 56px; height: 56px; font-size: 1.35rem; border-radius: 14px;">
+                    @(Model.User.FirstName.FirstOrDefault())@(Model.User.LastName.FirstOrDefault())
+                </div>
+                <div>
+                    <h1 class="h5 fw-bold mb-1">@Model.User.FullName</h1>
+                    <span class="badge @(Model.User.Role == "Admin" ? "bg-danger" : "bg-primary")">@Model.User.Role</span>
+                    @if (Model.User.IsActive)
+                    {
+                        <span class="badge bg-success-subtle text-success ms-1">Активен</span>
+                    }
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="small">
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Имя:</span>
+                    <span class="fw-semibold">@Model.User.FirstName</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Фамилия:</span>
+                    <span class="fw-semibold">@Model.User.LastName</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Email:</span>
+                    <span class="fw-semibold">@Model.User.Email</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">Роль в системе:</span>
+                    <span class="fw-semibold">@(Model.User.Role == "Admin" ? "Администратор" : "Студент")</span>
+                </div>
+                <div class="d-flex justify-content-between py-2">
+                    <span class="text-muted">Дата регистрации:</span>
+                    <span class="fw-semibold">@Model.User.CreatedAt.ToString("dd.MM.yyyy")</span>
+                </div>
+            </div>
+
+            @if (Model.User.Role == "Admin")
+            {
+                <div class="mt-4 d-grid">
+                    <a asp-controller="Admin" asp-action="Index" class="btn btn-ch-primary">Открыть панель администратора</a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="ch-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold mb-0">Мои активные записи на курсы (@Model.Enrollments.Count)</h2>
+                <a asp-controller="Courses" asp-action="Index" class="btn btn-sm btn-outline-primary rounded-3 fw-semibold">Каталог курсов</a>
+            </div>
+
+            @if (!Model.Enrollments.Any())
+            {
+                <div class="ch-empty-state py-4">
+                    <p class="text-muted mb-3">У вас пока нет активных записей на курсы.</p>
+                    <a asp-controller="Courses" asp-action="Index" class="btn btn-ch-primary btn-sm">Выбрать курс в каталоге</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Курс</th>
+                                <th>Категория</th>
+                                <th>Преподаватель</th>
+                                <th>Дата записи</th>
+                                <th class="text-end">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Enrollments)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">
+                                        <a asp-controller="Courses" asp-action="Details" asp-route-id="@item.CourseId" class="text-decoration-none text-dark">
+                                            @item.CourseTitle
+                                        </a>
+                                    </td>
+                                    <td><span class="ch-badge ch-badge-category">@item.CategoryName</span></td>
+                                    <td>@item.InstructorName</td>
+                                    <td class="text-muted small">@item.EnrollDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td class="text-end">
+                                        <form asp-controller="Enrollments" asp-action="Unenroll" method="post" class="d-inline" data-confirm="Отменить запись на курс «@item.CourseTitle»?">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="courseId" value="@item.CourseId" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-3">Отменить</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

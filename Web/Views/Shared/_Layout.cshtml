@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — CourseHub</title>
+    <script>
+        (function () {
+            var savedTheme = localStorage.getItem('ch-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @{
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+        var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+        var isAdminPage = string.Equals(currentController, "Admin", StringComparison.OrdinalIgnoreCase);
+    }
+
+    <header class="ch-navbar sticky-top">
+        <div class="@(isAdminPage ? "container-fluid px-3 px-lg-4" : "container")">
+            <nav class="navbar navbar-expand-lg navbar-light p-0">
+                <a class="ch-brand me-4" asp-controller="Courses" asp-action="Index">
+                    <span class="ch-brand-badge">CH</span>
+                    <span>CourseHub</span>
+                </a>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Меню">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
+                        <li class="nav-item">
+                            <a class="nav-link fw-semibold px-3" asp-controller="Courses" asp-action="Index">Каталог курсов</a>
+                        </li>
+                        @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Student"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link fw-semibold px-3" asp-controller="Enrollments" asp-action="MyCourses">Мои курсы</a>
+                            </li>
+                        }
+                        @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link fw-semibold px-3 @(isAdminPage ? "text-primary" : "")" asp-controller="Admin" asp-action="Index">
+                                    Панель администратора
+                                </a>
+                            </li>
+                        }
+                    </ul>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- Кнопка переключения Светлой / Тёмной темы (Солнце / Луна) -->
+                        <button type="button" id="themeToggleBtn" class="ch-theme-toggle" title="Переключить тему (Светлая / Тёмная)" aria-label="Переключить тему">
+                            <svg class="ch-icon-sun" xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                            <svg class="ch-icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </button>
+
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="dropdown">
+                                <button class="ch-user-menu-btn dropdown-toggle" type="button" id="userDropdownMenu" data-bs-toggle="dropdown" aria-expanded="false" title="Меню пользователя">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" width="23" height="23">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    </svg>
+                                    <span class="d-none d-sm-inline fw-semibold small">@User.Identity.Name</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end ch-dropdown-menu shadow border-0 rounded-4 p-2 mt-2" aria-labelledby="userDropdownMenu">
+                                    <li class="px-3 py-2 border-bottom mb-1">
+                                        <div class="fw-bold small text-dark">@User.Identity.Name</div>
+                                        <span class="badge @(User.IsInRole("Admin") ? "bg-danger" : "bg-primary") mt-1" style="font-size: 0.7rem;">
+                                            @(User.IsInRole("Admin") ? "Admin" : "Student")
+                                        </span>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item rounded-3 py-2 fw-semibold d-flex align-items-center gap-2" asp-controller="Account" asp-action="Profile">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" width="18" height="18">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                            </svg>
+                                            <span>Профиль</span>
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider my-1" /></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" data-confirm="Вы точно хотите выйти из аккаунта?">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item rounded-3 py-2 fw-semibold text-danger d-flex align-items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" width="18" height="18">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                                                </svg>
+                                                <span>Выйти</span>
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-secondary btn-sm px-3 py-2 rounded-3 fw-semibold" asp-controller="Account" asp-action="Login">Войти</a>
+                            <a class="btn btn-ch-primary btn-sm px-3 py-2 rounded-3" asp-controller="Account" asp-action="Register">Регистрация</a>
+                        }
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    @if (isAdminPage)
+    {
+        <div class="ch-admin-wrapper flex-grow-1">
+            <!-- Левая боковая панель администратора (Admin Sidebar) -->
+            <aside class="ch-admin-sidebar">
+                <div class="ch-sidebar-section-title">УПРАВЛЕНИЕ</div>
+                <nav class="ch-sidebar-nav">
+                    <a class="ch-sidebar-link @(currentAction == "Index" ? "active" : "")" asp-controller="Admin" asp-action="Index">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                        </svg>
+                        <span>Dashboard (Обзор)</span>
+                    </a>
+
+                    <a class="ch-sidebar-link @(currentAction == "Courses" || currentAction == "EditCourse" || currentAction == "CourseStudents" ? "active" : "")" asp-controller="Admin" asp-action="Courses">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                        </svg>
+                        <span>Курсы</span>
+                    </a>
+
+                    <a class="ch-sidebar-link @(currentAction == "CreateCourse" ? "active" : "")" asp-controller="Admin" asp-action="CreateCourse">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        <span>Добавить курс</span>
+                    </a>
+
+                    <a class="ch-sidebar-link @(currentAction == "Categories" || currentAction == "EditCategory" ? "active" : "")" asp-controller="Admin" asp-action="Categories">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" />
+                        </svg>
+                        <span>Категории</span>
+                    </a>
+
+                    <a class="ch-sidebar-link @(currentAction == "CreateCategory" ? "active" : "")" asp-controller="Admin" asp-action="CreateCategory">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        <span>Добавить категорию</span>
+                    </a>
+
+                    <a class="ch-sidebar-link @(currentAction.Contains("Student") && currentAction != "CourseStudents" ? "active" : "")" asp-controller="Admin" asp-action="Students">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                        </svg>
+                        <span>Студенты</span>
+                    </a>
+
+                    <a class="ch-sidebar-link @(currentAction == "Logs" ? "active" : "")" asp-controller="Admin" asp-action="Logs">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        <span>История действий</span>
+                    </a>
+                </nav>
+
+                <div class="ch-sidebar-section-title mt-4">НАВИГАЦИЯ</div>
+                <nav class="ch-sidebar-nav">
+                    <a class="ch-sidebar-link" asp-controller="Courses" asp-action="Index">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                        </svg>
+                        <span>Публичный каталог</span>
+                    </a>
+                    <a class="ch-sidebar-link" asp-controller="Account" asp-action="Profile">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                        </svg>
+                        <span>Мой профиль</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Основной контент админ-панели -->
+            <main role="main" class="ch-admin-content p-3 p-md-4">
+                @if (TempData["Success"] is string adminSuccess)
+                {
+                    <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+                        <strong>Успешно:</strong> @adminSuccess
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                    </div>
+                }
+                @if (TempData["Error"] is string adminError)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+                        <strong>Ошибка:</strong> @adminError
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                    </div>
+                }
+                @if (TempData["Info"] is string adminInfo)
+                {
+                    <div class="alert alert-info alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+                        @adminInfo
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </main>
+        </div>
+    }
+    else
+    {
+        <main role="main" class="py-4">
+            <div class="container">
+                @if (TempData["Success"] is string successMsg)
+                {
+                    <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+                        <strong>Успешно:</strong> @successMsg
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                    </div>
+                }
+                @if (TempData["Error"] is string errorMsg)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+                        <strong>Ошибка:</strong> @errorMsg
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                    </div>
+                }
+                @if (TempData["Info"] is string infoMsg)
+                {
+                    <div class="alert alert-info alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+                        @infoMsg
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </div>
+        </main>
+    }
+
+    <!-- Универсальное модальное окно подтверждения удаления / важных действий -->
+    <div class="modal fade" id="chConfirmModal" tabindex="-1" aria-labelledby="chConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="chConfirmModalLabel">Подтверждение действия</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body py-3">
+                    <p id="chConfirmModalMessage" class="mb-0 text-secondary">Вы уверены, что хотите выполнить это действие?</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light border rounded-3 px-4 fw-semibold" data-bs-dismiss="modal">Нет</button>
+                    <button type="button" id="chConfirmModalSubmit" class="btn btn-danger rounded-3 px-4 fw-semibold">Да</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="ch-footer @(isAdminPage ? "mt-0" : "")">
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <div>
+                <strong class="text-dark">CourseHub</strong> — Платформа онлайн-курсов (ASP.NET Core MVC &amp; Clean Architecture)
+            </div>
+            <div>
+                &copy; @DateTime.UtcNow.Year CourseHub. Все права защищены.
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

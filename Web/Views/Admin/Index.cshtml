@@ -1,0 +1,136 @@
+@model AdminDashboardDto
+@{
+    ViewData["Title"] = "Панель администратора";
+}
+
+<partial name="_AdminNav" />
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Панель администратора</h1>
+        <p class="text-muted mb-0">Сводная статистика учебного каталога, студентов и записей на курсы</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="CreateCourse" class="btn btn-ch-primary">+ Создать курс</a>
+        <a asp-action="CreateCategory" class="btn btn-outline-primary rounded-3 fw-semibold">+ Создать категорию</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="ch-stat-card">
+            <div class="text-muted small fw-semibold mb-1">Всего курсов</div>
+            <div class="ch-stat-value">@Model.TotalCourses</div>
+            <div class="small text-success mt-2">Доступно для записи: <strong>@Model.AvailableCourses</strong></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="ch-stat-card">
+            <div class="text-muted small fw-semibold mb-1">Категорий</div>
+            <div class="ch-stat-value">@Model.TotalCategories</div>
+            <div class="small text-muted mt-2"><a asp-action="Categories" class="text-decoration-none">Перейти к категориям &rarr;</a></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="ch-stat-card">
+            <div class="text-muted small fw-semibold mb-1">Студентов</div>
+            <div class="ch-stat-value">@Model.TotalStudents</div>
+            <div class="small mt-2">
+                <span class="text-success">Активны: <strong>@Model.ActiveStudents</strong></span>
+                @if (Model.BlockedStudents > 0)
+                {
+                    <span class="text-danger ms-2">Блок: <strong>@Model.BlockedStudents</strong></span>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="ch-stat-card">
+            <div class="text-muted small fw-semibold mb-1">Записей на курсы</div>
+            <div class="ch-stat-value text-primary">@Model.TotalEnrollments</div>
+            <div class="small text-muted mt-2">Активные зачисления студентов</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="ch-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold mb-0">Последние записи студентов на курсы</h2>
+                <a asp-action="Courses" class="small fw-semibold text-decoration-none">Все курсы &rarr;</a>
+            </div>
+
+            @if (!Model.RecentEnrollments.Any())
+            {
+                <p class="text-muted mb-0">Пока нет ни одной записи на курсы.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Студент</th>
+                                <th>Курс</th>
+                                <th>Дата</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var e in Model.RecentEnrollments)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-action="StudentDetails" asp-route-id="@e.UserId" class="fw-semibold text-decoration-none text-dark">
+                                            @e.StudentFullName
+                                        </a>
+                                        <div class="small text-muted">@e.StudentEmail</div>
+                                    </td>
+                                    <td>
+                                        <a asp-action="CourseStudents" asp-route-id="@e.CourseId" class="text-decoration-none">
+                                            @e.CourseTitle
+                                        </a>
+                                    </td>
+                                    <td class="small text-muted">@e.EnrollDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td class="text-end">
+                                        <a asp-action="CourseStudents" asp-route-id="@e.CourseId" class="btn btn-sm btn-light border rounded-3">Список курса</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="ch-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold mb-0">Журнал действий</h2>
+                <a asp-action="Logs" class="small fw-semibold text-decoration-none">Вся история &rarr;</a>
+            </div>
+
+            @if (!Model.RecentLogs.Any())
+            {
+                <p class="text-muted small mb-0">Журнал действий администратора пока пуст. Все изменения курсов, категорий и студентов будут отображаться здесь.</p>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var log in Model.RecentLogs)
+                    {
+                        <div class="border-bottom pb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold small text-primary">@log.Action</span>
+                                <span class="text-muted" style="font-size: 0.75rem;">@log.CreatedAt.ToString("dd.MM HH:mm")</span>
+                            </div>
+                            <div class="small text-dark mt-1">@log.Details</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

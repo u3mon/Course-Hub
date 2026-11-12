@@ -1,0 +1,98 @@
+@model CourseFormViewModel
+@{
+    ViewData["Title"] = "Редактирование курса";
+}
+
+<partial name="_AdminNav" />
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="ch-card p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h4 fw-bold mb-0">Редактирование курса</h1>
+                <a asp-action="Courses" class="btn btn-light border btn-sm rounded-3">Назад к списку</a>
+            </div>
+
+            <form asp-action="EditCourse" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small rounded-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Course.Title" class="form-label fw-semibold">Название курса *</label>
+                    <input asp-for="Course.Title" class="form-control" />
+                    <span asp-validation-for="Course.Title" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Course.CategoryId" class="form-label fw-semibold">Категория *</label>
+                        <select asp-for="Course.CategoryId" class="form-select">
+                            <option value="0">-- Выберите категорию --</option>
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Course.CategoryId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Course.InstructorName" class="form-label fw-semibold">Имя преподавателя *</label>
+                        <input asp-for="Course.InstructorName" class="form-control" />
+                        <span asp-validation-for="Course.InstructorName" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Course.Duration" class="form-label fw-semibold">Продолжительность *</label>
+                        <input asp-for="Course.Duration" class="form-control" />
+                        <span asp-validation-for="Course.Duration" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Course.Price" class="form-label fw-semibold">Стоимость (₽) *</label>
+                        <input asp-for="Course.Price" type="number" step="0.01" min="0" class="form-control" />
+                        <span asp-validation-for="Course.Price" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Course.MaxStudents" class="form-label fw-semibold">Макс. студентов</label>
+                        <input asp-for="Course.MaxStudents" type="number" min="1" class="form-control" placeholder="Без ограничений" />
+                        <span asp-validation-for="Course.MaxStudents" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Course.Description" class="form-label fw-semibold">Описание курса *</label>
+                    <textarea asp-for="Course.Description" rows="5" class="form-control"></textarea>
+                    <span asp-validation-for="Course.Description" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="CoverImageFile" class="form-label fw-semibold">Заменить обложку (файл)</label>
+                        <input asp-for="CoverImageFile" type="file" accept=".jpg,.jpeg,.png,.webp" class="form-control" />
+                        <span asp-validation-for="CoverImageFile" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Course.ImageUrl" class="form-label fw-semibold">Текущая ссылка на обложку (URL)</label>
+                        <input asp-for="Course.ImageUrl" class="form-control" />
+                        <span asp-validation-for="Course.ImageUrl" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mb-4">
+                    <input asp-for="Course.IsAvailable" class="form-check-input" type="checkbox" />
+                    <label asp-for="Course.IsAvailable" class="form-check-label fw-semibold">Курс доступен для записи студентов</label>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Courses" class="btn btn-light border px-4 rounded-3">Отмена</a>
+                    <button type="submit" class="btn btn-ch-primary px-4">Сохранить изменения</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

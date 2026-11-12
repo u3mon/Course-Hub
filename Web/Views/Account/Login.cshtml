@@ -1,0 +1,53 @@
+@model LoginDto
+@{
+    ViewData["Title"] = "Вход в систему";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-md-7 col-lg-5">
+        <div class="ch-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <span class="ch-brand-badge mb-2" style="width: 44px; height: 44px; font-size: 1.2rem;">CH</span>
+                <h1 class="h3 fw-bold mb-1">Вход в CourseHub</h1>
+                <p class="text-muted small mb-0">Введите свои учётные данные для доступа к платформе</p>
+            </div>
+
+            <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small rounded-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label fw-semibold">Электронная почта (Email)</label>
+                    <input asp-for="Email" id="loginEmail" class="form-control" placeholder="name@example.com" autocomplete="username" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label asp-for="Password" class="form-label fw-semibold mb-0">Пароль</label>
+                    </div>
+                    <input asp-for="Password" id="loginPassword" class="form-control" placeholder="Введите пароль" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-ch-primary w-100 py-2 mb-3">Войти в аккаунт</button>
+            </form>
+
+            <div class="text-center small text-muted">
+                <div class="mb-2">
+                    Забыли пароль от аккаунта?
+                    <a asp-controller="Account" asp-action="ForgotPassword" class="fw-semibold text-primary text-decoration-none">Восстановить пароль по Email</a>
+                </div>
+                <div>
+                    Ещё нет аккаунта?
+                    <a asp-controller="Account" asp-action="Register" class="fw-semibold text-primary text-decoration-none">Зарегистрироваться</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

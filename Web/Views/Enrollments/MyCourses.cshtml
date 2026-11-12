@@ -1,0 +1,82 @@
+@model List<EnrollmentDto>
+@{
+    ViewData["Title"] = "Мои курсы";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Мои курсы</h1>
+        <p class="text-muted mb-0">Список образовательных программ, на которые вы записаны</p>
+    </div>
+    <a asp-controller="Courses" asp-action="Index" class="btn btn-ch-primary">
+        Выбрать новые курсы
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="ch-empty-state">
+        <h2 class="h5 fw-bold mb-2">Вы ещё не записались ни на один курс</h2>
+        <p class="text-muted mb-3">Перейдите в каталог курсов, чтобы выбрать интересующее направление обучения.</p>
+        <a asp-controller="Courses" asp-action="Index" class="btn btn-ch-primary">Перейти в каталог</a>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-lg-4 d-flex">
+                <div class="ch-card d-flex flex-column w-100">
+                    @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                    {
+                        <img src="@item.ImageUrl" alt="@item.CourseTitle" class="ch-course-cover" />
+                    }
+                    else
+                    {
+                        <div class="ch-course-cover-placeholder">
+                            <span>@item.CourseTitle</span>
+                        </div>
+                    }
+
+                    <div class="p-4 d-flex flex-column flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="ch-badge ch-badge-category">@item.CategoryName</span>
+                            <span class="text-muted small">Запись: @item.EnrollDate.ToString("dd.MM.yyyy")</span>
+                        </div>
+
+                        <h2 class="h5 fw-bold mb-2">
+                            <a asp-controller="Courses" asp-action="Details" asp-route-id="@item.CourseId" class="text-decoration-none text-dark">
+                                @item.CourseTitle
+                            </a>
+                        </h2>
+
+                        <div class="small text-secondary mt-auto pt-3 border-top">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Преподаватель:</span>
+                                <strong class="text-dark">@item.InstructorName</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Продолжительность:</span>
+                                <strong class="text-dark">@item.Duration</strong>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-2">
+                            <a asp-controller="Courses" asp-action="Details" asp-route-id="@item.CourseId" class="btn btn-outline-primary rounded-3 fw-semibold flex-grow-1">
+                                Открыть курс
+                            </a>
+                            <form asp-controller="Enrollments" asp-action="Unenroll" method="post" data-confirm="Вы действительно хотите отменить запись на курс «@item.CourseTitle»?">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="courseId" value="@item.CourseId" />
+                                <button type="submit" class="btn btn-outline-danger rounded-3 fw-semibold">
+                                    Отменить запись
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

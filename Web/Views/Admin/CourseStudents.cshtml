@@ -1,0 +1,122 @@
+@model AdminCourseStudentsViewModel
+@{
+    ViewData["Title"] = $"Записи на курс: {Model.Course.Title}";
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<partial name="_AdminNav" />
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <div class="text-muted small mb-1">Записи студентов на курс</div>
+        <h1 class="h3 fw-bold mb-1">@Model.Course.Title</h1>
+        <div class="d-flex gap-2 align-items-center small">
+            <span class="ch-badge ch-badge-category">@Model.Course.CategoryName</span>
+            <span>Преподаватель: <strong>@Model.Course.InstructorName</strong></span>
+            <span>&bull; Записано: <strong>@Model.EnrolledStudents.Count @(Model.Course.MaxStudents.HasValue ? $"/ {Model.Course.MaxStudents.Value}" : "")</strong></span>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="EditCourse" asp-route-id="@Model.Course.Id" class="btn btn-outline-primary rounded-3 fw-semibold">Редактировать курс</a>
+        <a asp-action="Courses" class="btn btn-light border rounded-3">К списку курсов</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="ch-card p-4">
+            <h2 class="h5 fw-bold mb-3">Записанные студенты (@Model.EnrolledStudents.Count)</h2>
+
+            @if (!Model.EnrolledStudents.Any())
+            {
+                <div class="ch-empty-state py-4">
+                    <p class="text-muted mb-0">На этот курс пока не записан ни один студент.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Студент</th>
+                                <th>Email</th>
+                                <th>Статус аккаунта</th>
+                                <th>Дата записи</th>
+                                <th class="text-end">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.EnrolledStudents)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">
+                                        <a asp-action="StudentDetails" asp-route-id="@item.UserId" class="text-decoration-none text-dark">
+                                            @item.StudentFullName
+                                        </a>
+                                    </td>
+                                    <td>@item.StudentEmail</td>
+                                    <td>
+                                        @if (item.StudentIsActive)
+                                        {
+                                            <span class="ch-badge ch-badge-available">Активен</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="ch-badge ch-badge-unavailable">Заблокирован</span>
+                                        }
+                                    </td>
+                                    <td class="small text-muted">@item.EnrollDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td class="text-end">
+                                        <form asp-action="RemoveStudentFromCourse" method="post" class="d-inline"
+                                              data-confirm="Удалить запись студента @item.StudentFullName с курса «@Model.Course.Title»?">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="courseId" value="@Model.Course.Id" />
+                                            <input type="hidden" name="studentId" value="@item.UserId" />
+                                            <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-3">Отчислить</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="ch-card p-4">
+            <h2 class="h5 fw-bold mb-2">Добавить студента на курс</h2>
+            <p class="text-muted small mb-3">Вы можете вручную записать активного студента на данный курс.</p>
+
+            @if (!Model.AvailableStudents.Any())
+            {
+                <div class="alert alert-light border small mb-0">
+                    Все активные студенты уже записаны на этот курс или список студентов пуст.
+                </div>
+            }
+            else
+            {
+                <form asp-action="AddStudentToCourse" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="courseId" value="@Model.Course.Id" />
+                    <input type="hidden" name="returnUrl" value="@currentUrl" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Выберите студента</label>
+                        <select name="studentId" class="form-select" required>
+                            @foreach (var s in Model.AvailableStudents)
+                            {
+                                <option value="@s.Id">@s.FullName (@s.Email)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-ch-primary w-100">Записать студента</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,41 @@
+@model VerifyResetCodeDto
+@{
+    ViewData["Title"] = "Подтверждение кода из письма";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-md-7 col-lg-5">
+        <div class="ch-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <span class="ch-brand-badge mb-2" style="width: 44px; height: 44px; font-size: 1.2rem;">CH</span>
+                <h1 class="h3 fw-bold mb-1">Введите код из Email</h1>
+                <p class="text-muted small mb-0">
+                    Мы отправили 6-значный код на адрес <strong>@Model.Email</strong>
+                </p>
+            </div>
+
+            <form asp-controller="Account" asp-action="VerifyResetCode" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Email" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small rounded-3"></div>
+
+                <div class="mb-4">
+                    <label asp-for="Code" class="form-label fw-semibold">Код подтверждения</label>
+                    <input asp-for="Code" class="form-control text-center fw-bold fs-4" placeholder="123456" maxlength="10" autocomplete="one-time-code" autofocus />
+                    <span asp-validation-for="Code" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-ch-primary w-100 py-2 mb-3">Проверить код</button>
+            </form>
+
+            <div class="text-center small text-muted">
+                Не пришёл код или ошиблись в Email?
+                <a asp-controller="Account" asp-action="ForgotPassword" class="fw-semibold text-primary text-decoration-none">Отправить заново</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

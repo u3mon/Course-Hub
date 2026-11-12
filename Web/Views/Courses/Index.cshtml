@@ -1,0 +1,240 @@
+@model CatalogViewModel
+@{
+    ViewData["Title"] = "Каталог курсов";
+}
+
+<section class="ch-hero">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <span class="badge bg-white text-primary px-3 py-2 rounded-pill fw-semibold mb-3">Образовательная платформа CourseHub</span>
+            <h1 class="display-6 fw-bold mb-2">Изучайте востребованные IT-направления на практике</h1>
+            <p class="lead mb-0 opacity-75">Выбирайте курсы от практикующих инженеров, записывайтесь в один клик и управляйте своим обучением.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+            @if (User.Identity?.IsAuthenticated != true)
+            {
+                <a asp-controller="Account" asp-action="Register" class="btn btn-light text-primary fw-bold px-4 py-2 rounded-3 shadow-sm">
+                    Создать аккаунт студента
+                </a>
+            }
+            else if (User.IsInRole("Student"))
+            {
+                <a asp-controller="Enrollments" asp-action="MyCourses" class="btn btn-light text-primary fw-bold px-4 py-2 rounded-3 shadow-sm">
+                    Перейти к моим курсам
+                </a>
+            }
+            else if (User.IsInRole("Admin"))
+            {
+                <a asp-controller="Admin" asp-action="CreateCourse" class="btn btn-light text-primary fw-bold px-4 py-2 rounded-3 shadow-sm">
+                    + Добавить курс
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Фильтры и поиск -->
+<div class="ch-card p-3 p-md-4 mb-4">
+    <form asp-controller="Courses" asp-action="Index" method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary mb-1">Поиск по названию или преподавателю</label>
+            <input type="text" name="Search" value="@Model.Filter.Search" class="form-control" placeholder="Например: ASP.NET, PostgreSQL, Docker..." />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold small text-secondary mb-1">Категория</label>
+            <select name="CategoryId" class="form-select">
+                <option value="">Все категории</option>
+                @foreach (var cat in Model.Categories)
+                {
+                    <option value="@cat.Id" selected="@(Model.Filter.CategoryId == cat.Id)">@cat.Name (@cat.CoursesCount)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-semibold small text-secondary mb-1">Доступность</label>
+            <select name="IsAvailable" class="form-select">
+                <option value="">Все курсы</option>
+                <option value="true" selected="@(Model.Filter.IsAvailable == true)">Только открытые</option>
+                <option value="false" selected="@(Model.Filter.IsAvailable == false)">Набор закрыт</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold small text-secondary mb-1">Сортировка</label>
+            <select name="SortBy" class="form-select">
+                <option value="newest" selected="@(string.IsNullOrEmpty(Model.Filter.SortBy) || Model.Filter.SortBy == "newest")">Сначала новые</option>
+                <option value="title" selected="@(Model.Filter.SortBy == "title")">По названию (А-Я)</option>
+                <option value="price_asc" selected="@(Model.Filter.SortBy == "price_asc")">Сначала дешевле</option>
+                <option value="price_desc" selected="@(Model.Filter.SortBy == "price_desc")">Сначала дороже</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold small text-secondary mb-1">Цена от (₽)</label>
+            <input type="number" name="MinPrice" value="@Model.Filter.MinPrice" min="0" step="100" class="form-control" placeholder="0" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold small text-secondary mb-1">Цена до (₽)</label>
+            <input type="number" name="MaxPrice" value="@Model.Filter.MaxPrice" min="0" step="100" class="form-control" placeholder="Без лимита" />
+        </div>
+        <div class="col-md-6 d-flex gap-2 justify-content-md-end">
+            <a asp-controller="Courses" asp-action="Index" class="btn btn-light border px-4 rounded-3 fw-semibold">Сбросить</a>
+            <button type="submit" class="btn btn-ch-primary px-4">Найти курсы</button>
+        </div>
+    </form>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h5 fw-bold mb-0">Найдено курсов: <span class="text-primary">@Model.Courses.TotalCount</span></h2>
+    @if (Model.Courses.TotalPages > 1)
+    {
+        <span class="text-muted small">Страница @Model.Courses.PageNumber из @Model.Courses.TotalPages</span>
+    }
+</div>
+
+@if (!Model.Courses.Items.Any())
+{
+    <div class="ch-empty-state my-4">
+        <h3 class="h5 fw-bold mb-2">Курсы по вашему запросу не найдены</h3>
+        <p class="text-muted mb-3">Попробуйте изменить параметры поиска или сбросить выбранные фильтры.</p>
+        <a asp-controller="Courses" asp-action="Index" class="btn btn-ch-primary">Показать все курсы</a>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var course in Model.Courses.Items)
+        {
+            <div class="col-md-6 col-lg-4 d-flex">
+                <div class="ch-card ch-card-hover d-flex flex-column w-100">
+                    @if (!string.IsNullOrWhiteSpace(course.ImageUrl))
+                    {
+                        <img src="@course.ImageUrl" alt="@course.Title" class="ch-course-cover" />
+                    }
+                    else
+                    {
+                        <div class="ch-course-cover-placeholder">
+                            <span>@course.Title</span>
+                        </div>
+                    }
+
+                    <div class="p-4 d-flex flex-column flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <span class="ch-badge ch-badge-category">@course.CategoryName</span>
+                            @if (course.IsAvailable && !course.IsFull)
+                            {
+                                <span class="ch-badge ch-badge-available">Доступен</span>
+                            }
+                            else if (course.IsFull)
+                            {
+                                <span class="ch-badge ch-badge-unavailable">Мест нет</span>
+                            }
+                            else
+                            {
+                                <span class="ch-badge ch-badge-unavailable">Набор закрыт</span>
+                            }
+                        </div>
+
+                        <h3 class="h5 fw-bold mb-2">
+                            <a asp-controller="Courses" asp-action="Details" asp-route-id="@course.Id" class="text-decoration-none text-dark">
+                                @course.Title
+                            </a>
+                        </h3>
+
+                        <p class="text-muted small mb-3 flex-grow-1">@course.ShortDescription</p>
+
+                        <div class="border-top pt-3 mt-auto small text-secondary">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Преподаватель:</span>
+                                <strong class="text-dark">@course.InstructorName</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Длительность:</span>
+                                <strong class="text-dark">@course.Duration</strong>
+                            </div>
+                            @if (course.MaxStudents.HasValue)
+                            {
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Записано студентов:</span>
+                                    <strong class="text-dark">@course.EnrolledCount из @course.MaxStudents.Value</strong>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-2">
+                            <div>
+                                @if (course.Price == 0)
+                                {
+                                    <span class="fs-5 fw-bold text-success">Бесплатно</span>
+                                }
+                                else
+                                {
+                                    <span class="fs-5 fw-bold text-dark">@course.Price.ToString("N0") ₽</span>
+                                }
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                @if (course.IsEnrolled)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-2">Вы записаны</span>
+                                }
+                                <a asp-controller="Courses" asp-action="Details" asp-route-id="@course.Id" class="btn btn-ch-primary btn-sm px-3 py-2">
+                                    Подробнее
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Model.Courses.TotalPages > 1)
+    {
+        <nav aria-label="Пагинация каталога" class="mt-5">
+            <ul class="pagination justify-content-center gap-1">
+                <li class="page-item @(!Model.Courses.HasPreviousPage ? "disabled" : "")">
+                    <a class="page-link rounded-3 px-3"
+                       asp-action="Index"
+                       asp-route-Search="@Model.Filter.Search"
+                       asp-route-CategoryId="@Model.Filter.CategoryId"
+                       asp-route-MinPrice="@Model.Filter.MinPrice"
+                       asp-route-MaxPrice="@Model.Filter.MaxPrice"
+                       asp-route-IsAvailable="@Model.Filter.IsAvailable"
+                       asp-route-SortBy="@Model.Filter.SortBy"
+                       asp-route-Page="@(Model.Courses.PageNumber - 1)">
+                        &larr; Назад
+                    </a>
+                </li>
+
+                @for (int i = 1; i <= Model.Courses.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.Courses.PageNumber ? "active" : "")">
+                        <a class="page-link rounded-3 px-3"
+                           asp-action="Index"
+                           asp-route-Search="@Model.Filter.Search"
+                           asp-route-CategoryId="@Model.Filter.CategoryId"
+                           asp-route-MinPrice="@Model.Filter.MinPrice"
+                           asp-route-MaxPrice="@Model.Filter.MaxPrice"
+                           asp-route-IsAvailable="@Model.Filter.IsAvailable"
+                           asp-route-SortBy="@Model.Filter.SortBy"
+                           asp-route-Page="@i">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(!Model.Courses.HasNextPage ? "disabled" : "")">
+                    <a class="page-link rounded-3 px-3"
+                       asp-action="Index"
+                       asp-route-Search="@Model.Filter.Search"
+                       asp-route-CategoryId="@Model.Filter.CategoryId"
+                       asp-route-MinPrice="@Model.Filter.MinPrice"
+                       asp-route-MaxPrice="@Model.Filter.MaxPrice"
+                       asp-route-IsAvailable="@Model.Filter.IsAvailable"
+                       asp-route-SortBy="@Model.Filter.SortBy"
+                       asp-route-Page="@(Model.Courses.PageNumber + 1)">
+                        Вперёд &rarr;
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+}

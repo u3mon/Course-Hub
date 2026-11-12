@@ -1,0 +1,65 @@
+@model VerifyRegistrationDto
+@{
+    ViewData["Title"] = "Подтверждение регистрации";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-md-7 col-lg-5">
+        <div class="ch-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <span class="ch-brand-badge mb-2" style="width: 44px; height: 44px; font-size: 1.2rem;">CH</span>
+                <h1 class="h3 fw-bold mb-1">Подтверждение Email</h1>
+                <p class="text-muted small mb-0">
+                    Мы отправили 6-значный код на адрес <strong>@Model.Email</strong>
+                </p>
+            </div>
+
+            @if (!Model.CanResendCode)
+            {
+                <form asp-controller="Account" asp-action="VerifyRegistration" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Email" />
+                    <input type="hidden" asp-for="FailedAttempts" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small rounded-3"></div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label asp-for="Code" class="form-label fw-semibold mb-0">Введите 6-значный код из письма</label>
+                            <span class="badge bg-light text-secondary border">Попыток: @Model.RemainingAttempts из 3</span>
+                        </div>
+                        <input asp-for="Code" class="form-control text-center fw-bold fs-4" placeholder="123456" maxlength="10" autocomplete="one-time-code" autofocus />
+                        <span asp-validation-for="Code" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-ch-primary w-100 py-2 mb-3">
+                        Подтвердить и зарегистрироваться
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-warning border-0 rounded-3 small mb-4">
+                    <strong>Попытки исчерпаны (3 из 3).</strong><br />
+                    Вы 3 раза ввели неверный код. Нажмите кнопку ниже, чтобы отправить новый код подтверждения на <strong>@Model.Email</strong>.
+                </div>
+
+                <form asp-controller="Account" asp-action="ResendRegistrationCode" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="email" value="@Model.Email" />
+                    <button type="submit" class="btn btn-ch-primary w-100 py-2 mb-3">
+                        Отправить новый код на Email
+                    </button>
+                </form>
+            }
+
+            <div class="text-center small text-muted border-top pt-3 mt-2">
+                Указали неверный Email?
+                <a asp-controller="Account" asp-action="Register" class="fw-semibold text-primary text-decoration-none">Заполнить анкету заново</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

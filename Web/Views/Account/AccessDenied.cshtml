@@ -1,0 +1,14 @@
+@{
+    ViewData["Title"] = "Доступ запрещён";
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-md-7 col-lg-5">
+        <div class="ch-card p-5 text-center">
+            <div class="display-4 fw-bold text-danger mb-2">403</div>
+            <h1 class="h4 fw-bold mb-2">Недостаточно прав доступа</h1>
+            <p class="text-muted mb-4">У вашей учётной записи нет прав для просмотра данного раздела или выполнения запрошенной операции.</p>
+            <a asp-controller="Courses" asp-action="Index" class="btn btn-ch-primary px-4">Вернуться в каталог</a>
+        </div>
+    </div>
+</div>
